@@ -1,0 +1,31 @@
+- name: Execute a given command on a specified server
+  hosts: "{{ target_host }}"
+  become: yes
+  gather_facts: no
+
+  vars:
+    allowed_commands:
+      - status
+      - uptime
+      - whoami
+      - date
+      - hostname
+
+  pre_tasks:
+    - name: Validate if the command is allowed
+      fail:
+        msg: "Error: '{{ command_to_run }}' is not in the list of allowed commands: {{ allowed_commands }}"
+      when: command_to_run not in allowed_commands
+
+  tasks:
+    - name: Run the allowed command
+      ansible.builtin.command: "{{ command_to_run }}"
+      register: command_output
+
+    - name: Display command output
+      debug:
+        msg: "{{ command_output.stdout }}"
+
+# to run
+ansible-playbook -i hosts.ini run_command.yml -e "target_host=hk.xyz.uk command_to_run=status"
+
